@@ -78,7 +78,6 @@ class ConversationsViewController: UIViewController {
     }
     
     func setupTableView() {
-        tableView.isHidden = true
         tableView.register(UINib(nibName: "ConversationTableViewCell", bundle: nil), forCellReuseIdentifier: ConversationTableViewCell.identifier)
         tableView.dataSource = self
         tableView.delegate = self

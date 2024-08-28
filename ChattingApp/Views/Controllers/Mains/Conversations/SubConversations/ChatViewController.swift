@@ -12,7 +12,7 @@ import InputBarAccessoryView
 class ChatViewController: MessagesViewController {
     
     public var otherUserEmail: String
-    private let conversationId: String?
+    private var conversationId: String?
     public var isNewConversation = false
     
     private var messages = [UserMessage]()
@@ -86,17 +86,31 @@ extension ChatViewController: InputBarAccessoryViewDelegate {
         
         print("Sending: \(text)")
         
+        let message = UserMessage(sender: selfSender, messageId: messageId, sentDate: Date(), kind: .text(text))
+        
         if isNewConversation {
             let message = UserMessage(sender: selfSender, messageId: messageId, sentDate: Date(), kind: .text(text))
-            DatabaseManager.shared.createNewConversation(with: otherUserEmail, name: self.title ?? "User", firstMessage: message) { success in
+            DatabaseManager.shared.createNewConversation(with: otherUserEmail, name: self.title ?? "User", firstMessage: message) { [weak self] success in
                 if success {
                     print("message sent")
+                    self?.isNewConversation = false
+                    let newConversationId = "conversation_\(message.messageId)"
+                    self?.conversationId = newConversationId
+                    self?.listenForMessage(id: newConversationId, shouldScrollToBottom: true)
+                    self?.messageInputBar.inputTextView.text = nil
                 } else {
                     print("sent fail")
                 }
             }
         } else {
-            
+            DatabaseManager.shared.sendMessage(to: otherUserEmail, message: message, completion: { [weak self] success in
+                if success {
+                    self?.messageInputBar.inputTextView.text = nil
+                    print("message sent")
+                } else {
+                    print("failed to send")
+                }
+            })
         }
     }
     

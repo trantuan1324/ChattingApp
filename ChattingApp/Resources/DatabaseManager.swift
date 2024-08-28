@@ -144,8 +144,8 @@ extension DatabaseManager {
     
     /// create a new conversation with email and first message was sent
     public func createNewConversation(with otherUserEmail: String, name: String, firstMessage: UserMessage, completion: @escaping (Bool) -> Void) {
-        guard let currentEmail = UserDefaults.standard.value(forKey: "email") as? String else { return }
-        
+        guard let currentEmail = UserDefaults.standard.value(forKey: "email") as? String,
+        let currentName = UserDefaults.standard.value(forKey: "name") as? String else { return }
         let safeEmail = Utils.convertedEmail(Email: currentEmail)
         
         let ref = database.child("\(safeEmail)")
@@ -199,7 +199,7 @@ extension DatabaseManager {
             let recipientNewConversationData = [
                 "id": conversationId,
                 "other_user_email": safeEmail,
-                "name": "Me",
+                "name": currentName,
                 "latest_message": [
                     "date": dateStr,
                     "message": message,
@@ -371,5 +371,17 @@ extension DatabaseManager {
     /// send a message with target conversation and message
     public func sendMessage(to conversation: String, message: UserMessage, completion: @escaping (Bool) -> Void) {
         
+    }
+}
+
+extension DatabaseManager {
+    public func getDataFor(path: String, completion: @escaping (Result<Any, Error>) -> Void) {
+        database.child("\(path)").observeSingleEvent(of: .value) { snapshot in
+            guard let value = snapshot.value else {
+                completion(.failure(DatabaseError.failedToFetch))
+                return
+            }
+            completion(.success(value))
+        }
     }
 }
